@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rickshaw Fare BD</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1 data-i18n="title">Rickshaw Fare BD</h1>
+    <p class="subtitle" data-i18n="subtitle">Estimate rickshaw fares, bargain smart, split the bill, and log your trips &#x2014; fully offline.</p>
+  </div>
+  <button id="langBtn" class="lang-btn" type="button">Bangla</button>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="estimate" type="button" data-i18n="tabEstimate">Estimate</button>
+  <button class="tab" data-tab="bargain" type="button" data-i18n="tabBargain">Bargain &amp; Split</button>
+  <button class="tab" data-tab="trips" type="button" data-i18n="tabTrips">My Trips</button>
+  <button class="tab" data-tab="rates" type="button" data-i18n="tabRates">Rates</button>
+</nav>
+
+<main>
+  <!-- ESTIMATE -->
+  <section id="panel-estimate" class="panel">
+    <h2 data-i18n="estTitle">Fare estimator</h2>
+    <div class="form-grid">
+      <label>
+        <span data-i18n="distanceLabel">Distance (km)</span>
+        <input id="distanceInput" type="number" min="0" step="0.1" inputmode="decimal" placeholder="2.5">
+        <small data-i18n="distanceHint">Example: 2.5 for two and a half kilometres.</small>
+      </label>
+      <label>
+        <span data-i18n="waitingLabel">Waiting time (minutes)</span>
+        <input id="waitingInput" type="number" min="0" step="1" inputmode="numeric" placeholder="0" value="0">
+      </label>
+    </div>
+    <label class="check"><input id="nightCheck" type="checkbox"> <span data-i18n="nightLabel">Night ride (surcharge applies)</span></label>
+    <label class="check"><input id="roundCheck" type="checkbox" checked> <span data-i18n="roundLabel">Round fare to nearest 5 taka</span></label>
+    <p id="estError" class="error" hidden></p>
+    <div class="actions">
+      <button id="estimateBtn" type="button" data-i18n="estimateBtn">Calculate fare</button>
+      <button id="saveTripBtn" type="button" class="secondary" data-i18n="saveTripBtn" disabled>Save this trip</button>
+    </div>
+    <div id="breakdown" class="card" hidden>
+      <h3 data-i18n="breakdownTitle">Fare breakdown</h3>
+      <dl>
+        <div><dt data-i18n="rowBase">Base fare</dt><dd id="bdBase">-</dd></div>
+        <div><dt data-i18n="rowDistance">Distance</dt><dd id="bdDist">-</dd></div>
+        <div><dt data-i18n="rowWaiting">Waiting</dt><dd id="bdWait">-</dd></div>
+        <div><dt data-i18n="rowSubtotal">Subtotal</dt><dd id="bdSub">-</dd></div>
+        <div><dt data-i18n="rowSurcharge">Night surcharge</dt><dd id="bdNight">-</dd></div>
+        <div id="bdMinRow" hidden><dt data-i18n="rowMinFare">Minimum fare applied</dt><dd id="bdMin">-</dd></div>
+        <div class="total"><dt data-i18n="rowTotal">Total fare</dt><dd id="bdTotal">-</dd></div>
+      </dl>
+      <p id="estNote" class="note" hidden></p>
+    </div>
+    <p id="estMsg" class="msg" hidden></p>
+  </section>
+
+  <!-- BARGAIN & SPLIT -->
+  <section id="panel-bargain" class="panel" hidden>
+    <h2 data-i18n="bargainTitle">Bargain helper</h2>
+    <p data-i18n="bargainDesc">The driver asks one price, you offer another. The midpoint is a fair meeting point &#x2014; nothing more, nothing less.</p>
+    <div class="form-grid">
+      <label><span data-i18n="askedLabel">Driver asks</span><input id="askedInput" type="number" min="0" step="1" inputmode="numeric" placeholder="100"></label>
+      <label><span data-i18n="offerLabel">Your offer</span><input id="offerInput" type="number" min="0" step="1" inputmode="numeric" placeholder="60"></label>
+    </div>
+    <p id="bargainError" class="error" hidden></p>
+    <button id="bargainBtn" type="button" data-i18n="bargainBtn">Find midpoint</button>
+    <div id="bargainOut" class="card" hidden>
+      <div><span data-i18n="midpointLabel">Meet in the middle</span>: <strong id="midVal">-</strong></div>
+      <div><span data-i18n="midpointRounded">Rounded to nearest 5 taka</span>: <strong id="midRound">-</strong></div>
+    </div>
+
+    <h2 data-i18n="splitTitle">Split the fare</h2>
+    <div class="form-grid">
+      <label><span data-i18n="splitTotalLabel">Total fare</span><input id="splitTotalInput" type="number" min="0" step="1" inputmode="numeric" placeholder="100"></label>
+      <label><span data-i18n="splitPeopleLabel">Number of people</span><input id="splitPeopleInput" type="number" min="1" step="1" inputmode="numeric" placeholder="3" value="2"></label>
+    </div>
+    <p id="splitError" class="error" hidden></p>
+    <button id="splitBtn" type="button" data-i18n="splitBtn">Split</button>
+    <div id="splitOut" class="card" hidden>
+      <p><span data-i18n="splitPerPerson">Each person pays</span>: <span id="splitShares"></span></p>
+      <p class="note" data-i18n="splitNote">Leftover paisa go to the first people in line.</p>
+    </div>
+  </section>
+
+  <!-- TRIPS -->
+  <section id="panel-trips" class="panel" hidden>
+    <h2 data-i18n="tripsTitle">My trips</h2>
+    <div class="stats">
+      <div><span data-i18n="totalTrips">Trips</span>: <strong id="statCount">0</strong></div>
+      <div><span data-i18n="totalFare">Total spent</span>: <strong id="statFare">-</strong></div>
+      <div><span data-i18n="totalDistance">Total distance</span>: <strong id="statDist">0</strong></div>
+      <div><span data-i18n="avgFare">Average fare</span>: <strong id="statAvg">-</strong></div>
+    </div>
+    <div class="form-grid">
+      <label><span data-i18n="fromLabel">From</span><input id="tripFrom" type="text" maxlength="80" placeholder="Mirpur 10"></label>
+      <label><span data-i18n="toLabel">To</span><input id="tripTo" type="text" maxlength="80" placeholder="Dhanmondi 27"></label>
+      <label><span data-i18n="distanceLabel">Distance (km)</span><input id="tripDist" type="number" min="0" step="0.1" inputmode="decimal" placeholder="2.5"></label>
+      <label><span data-i18n="fareLabel">Fare</span><input id="tripFare" type="number" min="0" step="1" inputmode="numeric" placeholder="60"></label>
+      <label><span data-i18n="dateLabel">Date</span><input id="tripDate" type="date"></label>
+    </div>
+    <p id="tripError" class="error" hidden></p>
+    <div class="actions">
+      <button id="addTripBtn" type="button" data-i18n="addTripBtn">Add trip</button>
+      <button id="exportBtn" type="button" class="secondary" data-i18n="exportBtn">Export JSON</button>
+      <label class="file-btn secondary" data-i18n="importBtn">Import JSON<input id="importFile" type="file" accept=".json,application/json" hidden></label>
+    </div>
+    <p id="tripMsg" class="msg" hidden></p>
+    <div class="clear-row">
+      <input id="clearConfirm" type="text" placeholder="DELETE" aria-label="Type DELETE to confirm">
+      <button id="clearBtn" type="button" class="danger" disabled data-i18n="clearBtn">Clear all</button>
+      <small data-i18n="clearHint">Type DELETE to enable clearing.</small>
+    </div>
+    <p id="tripsEmpty" data-i18n="tripsEmpty">No trips yet. Estimate a fare and save it, or add one below.</p>
+    <ul id="tripList" class="trip-list"></ul>
+  </section>
+
+  <!-- RATES -->
+  <section id="panel-rates" class="panel" hidden>
+    <h2 data-i18n="ratesTitle">My rates</h2>
+    <p data-i18n="ratesDesc">There is no official rickshaw fare chart in Bangladesh &#x2014; fares are agreed per ride. These starting rates are samples only: change them to match what drivers charge in your area.</p>
+    <div class="form-grid">
+      <label><span data-i18n="baseLabel">Base fare</span><input id="rateBase" type="number" min="0" step="1" inputmode="numeric"></label>
+      <label><span data-i18n="perKmLabel">Per kilometre</span><input id="ratePerKm" type="number" min="0" step="1" inputmode="numeric"></label>
+      <label><span data-i18n="perMinLabel">Per waiting minute</span><input id="ratePerMin" type="number" min="0" step="1" inputmode="numeric"></label>
+      <label><span data-i18n="nightPctLabel">Night surcharge (%)</span><input id="rateNight" type="number" min="0" max="100" step="1" inputmode="numeric"></label>
+      <label><span data-i18n="minFareLabel">Minimum fare</span><input id="rateMin" type="number" min="0" step="1" inputmode="numeric"></label>
+    </div>
+    <p id="rateError" class="error" hidden></p>
+    <button id="saveRatesBtn" type="button" data-i18n="saveRatesBtn">Save rates</button>
+    <p id="rateMsg" class="msg" hidden></p>
+  </section>
+</main>
+
+<footer>
+  <p data-i18n="footerDisclaimer">Offline personal tool. No official fare chart exists &#x2014; always agree the fare with the driver before the ride.</p>
+  <p data-i18n="savedNote">Saved on this device only.</p>
+</footer>
+
+<script src="logic.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
